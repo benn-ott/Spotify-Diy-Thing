@@ -83,7 +83,7 @@ jobs:
           destination: ./_site
 
       - name: Upload GitHub Page Artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v4
 
   # Deployment job
   deploy:
