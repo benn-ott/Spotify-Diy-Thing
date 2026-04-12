@@ -7,7 +7,7 @@
 
  *******************************************************************/
 
-define YELLOW_DISPLAY
+#define YELLOW_DISPLAY
 
 // ----------------------------
 // Library Defines - Need to be defined before library import
