@@ -55,7 +55,7 @@ jobs:
       - name: Build CYD
         run: platformio run -e cyd
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: CYD Firmware
           path: .pio/build/cyd/firmware.bin
