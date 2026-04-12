@@ -19,10 +19,6 @@ class SpotifyDisplay {
     virtual boolean processImageInfo (CurrentlyPlaying currentlyPlaying)=0;
     virtual int displayImage() = 0;
 
-    //NFC tag messages
-    virtual void markDisplayAsTagRead() = 0;
-    virtual void markDisplayAsTagWritten() = 0;
-
     virtual void drawWifiManagerMessage(WiFiManager *myWiFiManager) = 0;
     virtual void drawRefreshTokenMessage() = 0;
 
