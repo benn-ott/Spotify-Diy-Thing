@@ -7,28 +7,7 @@
 
  *******************************************************************/
 
-// ----------------------------
-// Display type
-// ---------------------------
-
-// This project currently supports the following displays
-// (Uncomment the required #define)
-
-// 1. Cheap yellow display (Using TFT-eSPI library)
-// #define YELLOW_DISPLAY
-
-// 2. Matrix Displays (Like the ESP32 Trinity)
-// #define MATRIX_DISPLAY
-
-// If no defines are set, it will default to CYD
-#if !defined(YELLOW_DISPLAY) && !defined(MATRIX_DISPLAY)
-#define YELLOW_DISPLAY // Default to Yellow Display for display type
-#endif
-
-#define NFC_ENABLED 1
-
-// This causes issues in certain circumstances e.g. Play an album and let it auto play to related songs
-bool writeContextToNfc = true;
+define YELLOW_DISPLAY
 
 // ----------------------------
 // Library Defines - Need to be defined before library import
@@ -96,23 +75,9 @@ WiFiClientSecure client;
 // Display Handling Code
 // ----------------------------
 
-#if defined YELLOW_DISPLAY
-
 #include "cheapYellowLCD.h"
 CheapYellowDisplay cyd;
 SpotifyDisplay *spotifyDisplay = &cyd;
-
-#elif defined MATRIX_DISPLAY
-#include "matrixDisplay.h"
-MatrixDisplay matrixDisplay;
-SpotifyDisplay *spotifyDisplay = &matrixDisplay;
-
-#endif
-// ----------------------------
-
-#ifdef NFC_ENABLED
-#include "nfc.h"
-#endif
 
 void drawWifiManagerMessage(WiFiManager *myWiFiManager)
 {
@@ -134,16 +99,6 @@ void setup()
 
   spotifyDisplay->displaySetup(&spotify);
 
-#ifdef NFC_ENABLED
-  if (nfcSetup(&spotify, spotifyDisplay))
-  {
-    Serial.println("NFC Good");
-  }
-  else
-  {
-    Serial.println("NFC Bad");
-  }
-#endif
 
   // Initialise SPIFFS, if this fails try .begin(true)
   // NOTE: I believe this formats it though it will erase everything on
@@ -174,19 +129,12 @@ void setup()
 
   spotifySetup(spotifyDisplay, clientId, clientSecret);
 
-#if defined YELLOW_DISPLAY
-
   pinMode(0, INPUT); // has an internal pullup
   bool forceRefreshToken = digitalRead(0) == LOW;
   if (forceRefreshToken)
   {
     Serial.println("GPIO 0 is low, forcing refreshToken");
   }
-
-#else
-  bool forceRefreshToken = false;
-
-#endif
 
   // Check if we have a refresh Token
   if (forceRefreshToken || refreshToken[0] == '\0')
@@ -214,18 +162,6 @@ void loop()
   spotifyDisplay->checkForInput();
 
   bool forceUpdate = false;
-
-#ifdef NFC_ENABLED
-  if (writeContextToNfc)
-  {
-    forceUpdate = nfcLoop(lastTrackUri, lastTrackContextUri);
-  }
-  else
-  {
-    forceUpdate = nfcLoop(lastTrackUri);
-  }
-
-#endif
 
   updateCurrentlyPlaying(forceUpdate);
 

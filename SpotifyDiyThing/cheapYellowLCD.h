@@ -188,20 +188,6 @@ public:
     return imageStatus;
   }
 
-  // NFC tag messages
-  void markDisplayAsTagRead()
-  {
-    int imagePosition = screenCenterX - (imageWidth / 2);
-    tft.drawRect(imagePosition, 0, imageWidth, imageHeight, TFT_BLUE);
-    tft.drawRect(imagePosition + 2, 2, imageWidth - 4, imageHeight - 4, TFT_RED);
-  }
-  void markDisplayAsTagWritten()
-  {
-    int imagePosition = screenCenterX - (imageWidth / 2);
-    tft.drawRect(imagePosition, 0, imageWidth, imageHeight, TFT_RED);
-    tft.drawRect(imagePosition + 2, 2, imageWidth - 4, imageHeight - 4, TFT_GREEN);
-  }
-
   void drawWifiManagerMessage(WiFiManager *myWiFiManager)
   {
     Serial.println("Entered Conf Mode");
