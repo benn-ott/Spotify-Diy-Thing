@@ -15,7 +15,11 @@ Due to [changes to Spotify's security requirements](https://developer.spotify.co
 - Run the Python script, which will launch the Spotify authorization flow. The script should grab the URL and display the token, but you may need to copy and paste the URL yourself.
 - Save your refresh token, and enter it when you enter the client ID and client secret in while setting up your Wi-Fi. This should enable you to skip the authenication step from the original project.
 
-### Code
+### Functionality 
+
+- Adds basic pause/play toggle, triggered by tapping the album art.
+
+### Other
 
 - Removes all NFC and matrix display code.
 - Removes cyd2usb option (newer versions of this board no longer have the issues that made this option necessary).
