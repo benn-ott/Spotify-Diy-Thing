@@ -154,7 +154,7 @@ public:
           spotify_display->play();
       }
       drawTouchButtons(false, false, false, false);
-      if (playPauseToggle)
+      if (pausePlayToggle)
       {
         displayImage();
       }
