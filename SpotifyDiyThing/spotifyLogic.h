@@ -3,12 +3,14 @@ SpotifyDisplay *sp_Display;
 SpotifyArduino spotify(client, NULL, NULL);
 
 bool albumArtChanged = false;
+bool isCurrentlyPlaying = false;
 
 long songStartMillis;
 long songDuration;
 
 char lastTrackUri[200];
 char lastTrackContextUri[200];
+
 
 // You might want to make this much smaller, so it will update responsively
 
@@ -69,6 +71,7 @@ void handleCurrentlyPlaying(CurrentlyPlaying currentlyPlaying)
 {
   if (currentlyPlaying.trackUri != NULL)
   {
+    isCurrentlyPlaying = currentlyPlaying.isPlaying;
     if (!isSameTrack(currentlyPlaying.trackUri))
     {
       setTrackUri(currentlyPlaying.trackUri);
@@ -82,7 +85,7 @@ void handleCurrentlyPlaying(CurrentlyPlaying currentlyPlaying)
 
     sp_Display->displayTrackProgress(currentlyPlaying.progressMs, currentlyPlaying.durationMs);
 
-    if (currentlyPlaying.isPlaying)
+    if (isCurrentlyPlaying)
     {
       // If we know at what millis the song started at, we can make a good guess
       // at updating the progress bar more often than checking the API

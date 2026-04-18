@@ -13,6 +13,7 @@
 
 bool previousTrackStatus = false;
 bool nextTrackStatus = false;
+bool pausePlayToggle = false;
 
 //SPIClass mySpi = SPIClass(HSPI);
 //
@@ -32,7 +33,7 @@ void touchSetup(SpotifyArduino *spotifyObj) {
 bool handleTouched() {
   previousTrackStatus = false;
   nextTrackStatus = false;
-  //if (ts.tirqTouched() && ts.touched()) {
+  pausePlayToggle = false;
   if (ts.touched()) {
     CYD28_TS_Point p = ts.getPointScaled();
     Serial.print("Pressure = ");
@@ -45,11 +46,12 @@ bool handleTouched() {
     Serial.println();
     if (p.x < 120) {
       previousTrackStatus = true;
-      //spotify_touch->previousTrack();
       return true;
     } else if (p.x > 200) {
       nextTrackStatus = true;
-      //spotify_touch->nextTrack();
+      return true;
+    } else if (p.x > 120 && p.x < 200) {
+      pausePlayToggle = true;
       return true;
     }
   }

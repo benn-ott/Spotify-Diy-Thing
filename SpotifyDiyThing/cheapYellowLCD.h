@@ -91,7 +91,7 @@ public:
   {
     tft.fillScreen(TFT_BLACK);
 
-    drawTouchButtons(false, false);
+    drawTouchButtons(false, false, false, false);
   }
 
   void displayTrackProgress(long progress, long duration)
@@ -136,7 +136,7 @@ public:
   {
     if (millis() > touchScreenCoolDownTime && handleTouched())
     {
-      drawTouchButtons(previousTrackStatus, nextTrackStatus);
+      drawTouchButtons(previousTrackStatus, nextTrackStatus, pausePlayToggle, isCurrentlyPlaying);
       if (previousTrackStatus)
       {
         spotify_display->previousTrack();
@@ -145,7 +145,19 @@ public:
       {
         spotify_display->nextTrack();
       }
-      drawTouchButtons(false, false);
+      else if (pausePlayToggle)
+      {
+
+        if (isCurrentlyPlaying)
+          spotify_display->pause();
+        else
+          spotify_display->play();
+      }
+      drawTouchButtons(false, false, false, false);
+      if (playPauseToggle)
+      {
+        displayImage();
+      }
       requestDueTime = 0;                                               // Some button has been pressed and acted on, it surely impacts the status so force a refresh
       touchScreenCoolDownTime = millis() + touchScreenCoolDownInterval; // Cool the touch off
     }
@@ -287,7 +299,7 @@ private:
     return decodeStatus;
   }
 
-  void drawTouchButtons(bool backStatus, bool forwardStatus)
+  void drawTouchButtons(bool backStatus, bool forwardStatus, bool pausePlayStatus, bool isPlayingStatus)
   {
 
     int buttonCenterY = 75;
@@ -316,12 +328,24 @@ private:
     {
       tft.fillCircle(rightButtonCenterX, buttonCenterY, 15, TFT_GREEN);
     }
-    else
-    {
-      tft.drawCircle(rightButtonCenterX, buttonCenterY, 15, TFT_WHITE);
-    }
-
     tft.fillTriangle(rightButtonCenterX + 4, buttonCenterY, rightButtonCenterX - 6, buttonCenterY - 10, rightButtonCenterX - 6, buttonCenterY + 10, TFT_WHITE);
     tft.drawRect(rightButtonCenterX + 6, buttonCenterY - 10, 2, 20, TFT_WHITE);
+
+    // Draw pause/play Button
+    if(pausePlayStatus)
+    {
+      tft.drawCircle(screenCenterX, buttonCenterY, 16, TFT_WHITE);
+      if(isPlayingStatus)
+      {
+        // Draw pause symbol
+        tft.fillRect(screenCenterX - 7, buttonCenterY - 10, 3, 20, TFT_WHITE);
+        tft.fillRect(screenCenterX + 2, buttonCenterY - 10, 3, 20, TFT_WHITE);
+      }
+      else
+      {
+        // Draw play symbol
+        tft.fillTriangle(screenCenterX - 4, buttonCenterY - 8, screenCenterX - 4, buttonCenterY + 8, screenCenterX + 8, buttonCenterY, TFT_WHITE);
+      }
+    }
   }
 };
