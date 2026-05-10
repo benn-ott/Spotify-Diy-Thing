@@ -147,11 +147,14 @@ public:
       }
       else if (pausePlayToggle)
       {
-
         if (isCurrentlyPlaying)
+        {
           spotify_display->pause();
+        }
         else
+        {
           spotify_display->play();
+        }
       }
       drawTouchButtons(false, false, false, false);
       if (pausePlayToggle)
