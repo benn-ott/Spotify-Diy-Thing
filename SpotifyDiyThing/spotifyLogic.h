@@ -102,7 +102,7 @@ void handleCurrentlyPlaying(CurrentlyPlaying currentlyPlaying)
 
 void updateProgressBar()
 {
-  if (songStartMillis != 0 && millis() > progressDueTime)
+  if (songStartMillis != 0 && millis() < requestDueTime && millis() > progressDueTime)
   {
     long songProgress = millis() - songStartMillis;
     if (songProgress > songDuration)
