@@ -34,6 +34,7 @@ bool handleTouched() {
   previousTrackStatus = false;
   nextTrackStatus = false;
   pausePlayToggle = false;
+
   if (ts.touched()) {
     CYD28_TS_Point p = ts.getPointScaled();
     Serial.print("Pressure = ");
@@ -44,6 +45,7 @@ bool handleTouched() {
     Serial.print(p.y);
     delay(30);
     Serial.println();
+
     if (p.x < 120) {
       previousTrackStatus = true;
       return true;
@@ -57,5 +59,4 @@ bool handleTouched() {
   }
 
   return false;
-
 }

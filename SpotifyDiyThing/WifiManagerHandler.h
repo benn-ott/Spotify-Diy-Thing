@@ -24,7 +24,7 @@ void saveConfigCallback () {
   shouldSaveConfig = true;
 }
 
-void setupWiFiManager(bool forceConfig, char *refreshToken, void (*saveConfig)(char *, char *, char *), void (*configModeCallback)(WiFiManager *myWiFiManager)){
+void setupWiFiManager(bool forceConfig, char *refreshToken, void (*saveConfig)(char *, char *, char *), void (*configModeCallback)(WiFiManager *myWiFiManager)) {
   WiFiManager wm;
   //set config save notify callback
   wm.setSaveConfigCallback(saveConfigCallback);
@@ -42,6 +42,7 @@ void setupWiFiManager(bool forceConfig, char *refreshToken, void (*saveConfig)(c
   if (forceConfig) {
     // IF we forced config this time, lets stop the double reset so it doesn't get stuck in a loop
     drd->stop();
+
     if (!wm.startConfigPortal("SpotifyDIY", "thing123")) {
       Serial.println("failed to connect and hit timeout");
       delay(3000);
@@ -60,9 +61,7 @@ void setupWiFiManager(bool forceConfig, char *refreshToken, void (*saveConfig)(c
   }
 
   //save the custom parameters to FS
-  if (shouldSaveConfig)
-  {
-
+  if (shouldSaveConfig) {
     strncpy(clientId, clientIdParam.getValue(), 40);
     strncpy(clientSecret, clientSecretParam.getValue(), 40);
     strncpy(refreshToken, clientRefreshToken.getValue(), 399);

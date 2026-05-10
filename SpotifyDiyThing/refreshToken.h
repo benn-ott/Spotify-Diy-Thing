@@ -24,8 +24,7 @@ char *clientIdRefresh;
 
 WebServer server(80);
 
-void handleRoot()
-{
+void handleRoot() {
   char webpage[1150];
   char scope[] = "user-read-playback-state%20user-modify-playback-state";
 
@@ -59,33 +58,26 @@ void handleRoot()
   server.send(200, "text/html", webpage);
 }
 
-void handleCallback()
-{
+void handleCallback() {
   String code = "";
   const char *rt = NULL;
-  for (uint8_t i = 0; i < server.args(); i++)
-  {
-    if (server.argName(i) == "code")
-    {
+  for (uint8_t i = 0; i < server.args(); i++) {
+    if (server.argName(i) == "code") {
       code = server.arg(i);
       rt = spotify_refresh->requestAccessTokens(code.c_str(), callbackURI);
     }
   }
 
-  if (rt != NULL)
-  {
+  if (rt != NULL) {
     strcpy(refreshToken, rt);
     haveRefreshToken = true;
     server.send(200, "text/plain", "Got Token, your device should be ready");
-  }
-  else
-  {
+  } else {
     server.send(404, "text/plain", "Failed to load token, check serial monitor");
   }
 }
 
-void handleNotFound()
-{
+void handleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -95,8 +87,7 @@ void handleNotFound()
   message += server.args();
   message += "\n";
 
-  for (uint8_t i = 0; i < server.args(); i++)
-  {
+  for (uint8_t i = 0; i < server.args(); i++) {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
 
@@ -104,7 +95,7 @@ void handleNotFound()
   server.send(404, "text/plain", message);
 }
 
-bool launchRefreshTokenFlow(SpotifyArduino *spotifyObj, char *clientId){
+bool launchRefreshTokenFlow(SpotifyArduino *spotifyObj, char *clientId) {
   spotify_refresh = spotifyObj;
   clientIdRefresh = clientId;
 

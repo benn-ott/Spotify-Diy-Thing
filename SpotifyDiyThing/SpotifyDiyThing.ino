@@ -79,20 +79,17 @@ WiFiClientSecure client;
 CheapYellowDisplay cyd;
 SpotifyDisplay *spotifyDisplay = &cyd;
 
-void drawWifiManagerMessage(WiFiManager *myWiFiManager)
-{
+void drawWifiManagerMessage(WiFiManager *myWiFiManager) {
   spotifyDisplay->drawWifiManagerMessage(myWiFiManager);
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
 
   bool forceConfig = false;
 
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-  if (drd->detectDoubleReset())
-  {
+  if (drd->detectDoubleReset()) {
     Serial.println(F("Forcing config mode as there was a Double reset detected"));
     forceConfig = true;
   }
@@ -106,17 +103,16 @@ void setup()
   // I have found once I used the true flag once, I could use it
   // without the true flag after that.
   bool spiffsInitSuccess = SPIFFS.begin(false) || SPIFFS.begin(true);
-  if (!spiffsInitSuccess)
-  {
+  if (!spiffsInitSuccess) {
     Serial.println("SPIFFS initialisation failed!");
     while (1)
       yield(); // Stay here twiddling thumbs waiting
   }
+  
   Serial.println("\r\nInitialisation done.");
 
   refreshToken[0] = '\0';
-  if (!fetchConfigFile(refreshToken, clientId, clientSecret))
-  {
+  if (!fetchConfigFile(refreshToken, clientId, clientSecret)) {
     // Failed to fetch config file, need to launch Wifi Manager
     forceConfig = true;
   }
@@ -131,19 +127,16 @@ void setup()
 
   pinMode(0, INPUT); // has an internal pullup
   bool forceRefreshToken = digitalRead(0) == LOW;
-  if (forceRefreshToken)
-  {
+  if (forceRefreshToken) {
     Serial.println("GPIO 0 is low, forcing refreshToken");
   }
 
   // Check if we have a refresh Token
-  if (forceRefreshToken || refreshToken[0] == '\0')
-  {
-
+  if (forceRefreshToken || refreshToken[0] == '\0') {
     spotifyDisplay->drawRefreshTokenMessage();
     Serial.println("Launching refresh token flow");
-    if (launchRefreshTokenFlow(&spotify, clientId))
-    {
+    
+    if (launchRefreshTokenFlow(&spotify, clientId)) {
       Serial.print("Refresh Token: ");
       Serial.println(refreshToken);
       saveConfigFile(refreshToken, clientId, clientSecret);
@@ -155,15 +148,10 @@ void setup()
   spotifyDisplay->showDefaultScreen();
 }
 
-void loop()
-{
+void loop() {
   drd->loop();
-
   spotifyDisplay->checkForInput();
-
   bool forceUpdate = false;
-
   updateCurrentlyPlaying(forceUpdate);
-
   updateProgressBar();
 }

@@ -22,15 +22,15 @@ class SpotifyDisplay {
     virtual void drawWifiManagerMessage(WiFiManager *myWiFiManager) = 0;
     virtual void drawRefreshTokenMessage() = 0;
 
-    void setAlbumArtUrl(const char* albumArtUrl){
+    void setAlbumArtUrl(const char* albumArtUrl) {
       strcpy(_albumArtUrl, albumArtUrl);
     }
 
-    char* getAlbumArtUrl(){
+    char* getAlbumArtUrl() {
       return _albumArtUrl;
     }
 
-    bool isSameAlbum(const char* albumArtUrl){
+    bool isSameAlbum(const char* albumArtUrl) {
       return strcmp(_albumArtUrl, albumArtUrl) == 0;
     }
 

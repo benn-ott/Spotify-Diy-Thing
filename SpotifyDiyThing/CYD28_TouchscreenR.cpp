@@ -34,8 +34,7 @@
 static CYD28_TouchR *isrPinptr;
 void isrPin(void);
 // ------------------------------------------------------------
-bool CYD28_TouchR::begin()
-{
+bool CYD28_TouchR::begin() {
   pinMode(CYD28_TouchR_MOSI, OUTPUT);
   pinMode(CYD28_TouchR_MISO, INPUT);
   pinMode(CYD28_TouchR_CLK, OUTPUT);
@@ -49,22 +48,20 @@ bool CYD28_TouchR::begin()
 }
 // ------------------------------------------------------------
 ISR_PREFIX
-void isrPin(void)
-{
+void isrPin(void) {
   CYD28_TouchR *o = isrPinptr;
   o->isrWake = true;
 }
 // ------------------------------------------------------------
-uint8_t CYD28_TouchR::transfer(uint8_t val)
-{
+uint8_t CYD28_TouchR::transfer(uint8_t val) {
   uint8_t out = 0;
   uint8_t del = _delay >> 1;
   uint8_t bval = 0;
   int sck = LOW;
 
   int8_t bit = 8;
-  while (bit)
-  {
+
+  while (bit) {
     bit--;
     digitalWrite(CYD28_TouchR_MOSI, ((val & (1 << bit)) ? HIGH : LOW)); // Write bit
     wait(del);
@@ -78,16 +75,14 @@ uint8_t CYD28_TouchR::transfer(uint8_t val)
     sck ^= 1u;
     digitalWrite(CYD28_TouchR_CLK, sck);
   }
+
   return out;
 }
 // ------------------------------------------------------------
-uint16_t CYD28_TouchR::transfer16(uint16_t data)
-{
-  union
-  {
+uint16_t CYD28_TouchR::transfer16(uint16_t data) {
+  union {
     uint16_t val;
-    struct
-    {
+    struct {
       uint8_t lsb;
       uint8_t msb;
     };
@@ -99,44 +94,37 @@ uint16_t CYD28_TouchR::transfer16(uint16_t data)
   return out.val;
 }
 // ------------------------------------------------------------
-void CYD28_TouchR::wait(uint_fast8_t del)
-{
-  for (uint_fast8_t i = 0; i < del; i++)
-  {
+void CYD28_TouchR::wait(uint_fast8_t del) {
+  for (uint_fast8_t i = 0; i < del; i++) {
     asm volatile("nop");
   }
 }
 // ------------------------------------------------------------
-CYD28_TS_Point CYD28_TouchR::getPointScaled()
-{
+CYD28_TS_Point CYD28_TouchR::getPointScaled() {
   update();
   int16_t x = xraw, y = yraw;
   convertRawXY(&x, &y);
   return CYD28_TS_Point(x, y, zraw);
 }
 // ------------------------------------------------------------
-CYD28_TS_Point CYD28_TouchR::getPointRaw()
-{
+CYD28_TS_Point CYD28_TouchR::getPointRaw() {
   update();
   return CYD28_TS_Point(xraw, yraw, zraw);
 }
 // ------------------------------------------------------------
-bool CYD28_TouchR::touched()
-{
+bool CYD28_TouchR::touched() {
   update();
   return ((zraw >= threshold) && isrWake);
 }
 // ------------------------------------------------------------
-void CYD28_TouchR::readData(uint16_t *x, uint16_t *y, uint8_t *z)
-{
+void CYD28_TouchR::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
   update();
   *x = xraw;
   *y = yraw;
   *z = zraw;
 }
 // ------------------------------------------------------------
-static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
-{
+static int16_t besttwoavg(int16_t x, int16_t y, int16_t z) {
   int16_t da, db, dc;
   int16_t reta = 0;
   if (x > y)  da = x - y;
@@ -153,13 +141,15 @@ static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
   return (reta);
 }
 // ------------------------------------------------------------
-void CYD28_TouchR::update()
-{
+void CYD28_TouchR::update() {
   int16_t data[6];
   int z;
+
   if (!isrWake)
     return;
+
   uint32_t now = millis();
+
   if (now - msraw < MSEC_THRESHOLD)
     return;
 
@@ -169,36 +159,37 @@ void CYD28_TouchR::update()
   z = z1 + 4095;
   int16_t z2 = transfer16(0x91 /* X */) >> 3;
   z -= z2;
-  if (z >= threshold)
-  {
+
+  if (z >= threshold) {
     transfer16(0x91 /* X */); // dummy X measure, 1st is always noisy
     data[0] = transfer16(0xD1 /* Y */) >> 3;  
     data[1] = transfer16(0x91 /* X */) >> 3;  // make 3 x-y measurements
     data[2] = transfer16(0xD1 /* Y */) >> 3;
     data[3] = transfer16(0x91 /* X */) >> 3;
+  } else {
+    data[0] = data[1] = data[2] = data[3] = 0;
   }
-  else  data[0] = data[1] = data[2] = data[3] = 0;
+
   data[4] = transfer16(0xD0 /* Y */) >> 3;
   data[5] = transfer16(0) >> 3;
   digitalWrite(CYD28_TouchR_CS, HIGH);
 
   if (z < 0) z = 0;
-  if (z < threshold)
-  {
+
+  if (z < threshold) {
     zraw = 0;
-    if (z < CYD28_TouchR_Z_THRES_INT)
-    { 
+    if (z < CYD28_TouchR_Z_THRES_INT) { 
       isrWake = false;
     }
     return;
   }
+
   zraw = z;
 
   int16_t x = besttwoavg(data[0], data[2], data[4]);
   int16_t y = besttwoavg(data[1], data[3], data[5]);
 
-  if (z >= threshold)
-  {
+  if (z >= threshold) {
     msraw = now; // good read completed, set wait
     xraw = x;
     yraw = y;
@@ -206,11 +197,9 @@ void CYD28_TouchR::update()
   }
 }
 // ------------------------------------------------------------
-void CYD28_TouchR::convertRawXY(int16_t *x, int16_t *y)
-{
+void CYD28_TouchR::convertRawXY(int16_t *x, int16_t *y) {
   int16_t x_tmp = *x, y_tmp = *y, xx, yy;
-  switch (rotation)
-  {
+  switch (rotation) {
   case 0: // PORT0
     xx = ((y_tmp - CYD28_TouchR_CAL_YMIN) * sizeY_px) / (CYD28_TouchR_CAL_YMAX - CYD28_TouchR_CAL_YMIN);
     yy = ((x_tmp - CYD28_TouchR_CAL_XMIN) * sizeX_px) / (CYD28_TouchR_CAL_XMAX - CYD28_TouchR_CAL_XMIN);

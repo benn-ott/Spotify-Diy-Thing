@@ -9,6 +9,7 @@ bool fetchConfigFile(char *refreshToken, char *clientId, char *clientSecret) {
     //file exists, reading and loading
     Serial.println("reading config file");
     File configFile = SPIFFS.open(SPOTIFY_CONFIG_JSON, "r");
+    
     if (configFile) {
       Serial.println("opened config file");
       StaticJsonDocument<512> json;
