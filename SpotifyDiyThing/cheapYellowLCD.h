@@ -158,7 +158,7 @@ class CheapYellowDisplay : public SpotifyDisplay {
     // Image Related
     void clearImage() {
       int imagePosition = screenCenterX - (imageWidth / 2);
-      tft.fillRect(imagePosition, 0, imageWidth, imageHeight, TFT_BLACK);
+      tft.fillRect(imagePosition, 0, imageWidth + 1, imageHeight, TFT_BLACK);
     }
 
     boolean processImageInfo(CurrentlyPlaying currentlyPlaying) {
@@ -178,6 +178,7 @@ class CheapYellowDisplay : public SpotifyDisplay {
 
     int displayImage() {
       int imageStatus = displayImageUsingFile(_albumArtUrl);
+
       Serial.print("imageStatus: ");
       Serial.println(imageStatus);
 
