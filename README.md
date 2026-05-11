@@ -23,3 +23,9 @@ Due to [changes to Spotify's security requirements](https://developer.spotify.co
 
 - Removes all NFC and matrix display code.
 - Removes cyd2usb option (newer versions of this board no longer have the issues that made this option necessary).
+- Minor bug fixes to progress tracker, album art updates, and other non-essential features.
+
+### To come
+
+- Updates for title/artist/album rendering to set maximum length and deal with missing characters.
+- Additional screens for device selection and music selection.
