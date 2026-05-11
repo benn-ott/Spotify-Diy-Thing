@@ -30,14 +30,14 @@
 
 #include "Arduino.h"
 
-#define CYD28_TouchR_Z_THRESH       300
+#define CYD28_TouchR_Z_THRESH     300
 #define CYD28_TouchR_Z_THRES_INT  75
 
-#define CYD28_TouchR_IRQ  36
+#define CYD28_TouchR_IRQ    36
 #define CYD28_TouchR_MOSI   32
 #define CYD28_TouchR_MISO   39
-#define CYD28_TouchR_CLK  25
-#define CYD28_TouchR_CS   33
+#define CYD28_TouchR_CLK    25
+#define CYD28_TouchR_CS     33
 
 // CALIBRAION VALUES
 #define CYD28_TouchR_CAL_XMIN 185
@@ -50,23 +50,29 @@ class CYD28_TS_Point {
   public:
     CYD28_TS_Point(void) : x(0), y(0), z(0) {}
     CYD28_TS_Point(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
-    bool operator==(CYD28_TS_Point p) { return ((p.x == x) && (p.y == y) && (p.z == z)); }
-    bool operator!=(CYD28_TS_Point p) { return ((p.x != x) || (p.y != y) || (p.z != z)); }
+
+    bool operator==(CYD28_TS_Point p) {
+      return ((p.x == x) && (p.y == y) && (p.z == z));
+    }
+
+    bool operator!=(CYD28_TS_Point p) {
+      return ((p.x != x) || (p.y != y) || (p.z != z));
+    }
+
     int16_t x, y, z;
 };
 
 class CYD28_TouchR {
   public:
-    constexpr CYD28_TouchR(int32_t w, int32_t h)
-      : _delay(2), sizeX_px(w), sizeY_px(h){ }
+    constexpr CYD28_TouchR(int32_t w, int32_t h) : _delay(2), sizeX_px(w), sizeY_px(h) {}
     bool begin();
 
     CYD28_TS_Point getPointScaled();
     CYD28_TS_Point getPointRaw();
     bool touched();
     void readData(uint16_t *x, uint16_t *y, uint8_t *z);
-    void setRotation(uint8_t n) { rotation = n % 4; }
-    void setThreshold(uint16_t th) { threshold = th;}
+    void setRotation(uint8_t n) {rotation = n % 4;}
+    void setThreshold(uint16_t th) {threshold = th;}
 
     volatile bool isrWake=true;
 

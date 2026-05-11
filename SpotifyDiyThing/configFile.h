@@ -15,6 +15,7 @@ bool fetchConfigFile(char *refreshToken, char *clientId, char *clientSecret) {
       StaticJsonDocument<512> json;
       DeserializationError error = deserializeJson(json, configFile);
       serializeJsonPretty(json, Serial);
+
       if (!error) {
         Serial.println("\nparsed json");
 
@@ -36,10 +37,12 @@ bool fetchConfigFile(char *refreshToken, char *clientId, char *clientSecret) {
         Serial.println("failed to load json config");
         return false;
       }
+
     } else {
       Serial.println("Failed to open config file");
       return false;
     }
+    
   } else {
     Serial.println("Config file does not exist");
     return false;

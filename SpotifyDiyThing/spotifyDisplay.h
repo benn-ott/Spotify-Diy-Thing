@@ -39,17 +39,9 @@ class SpotifyDisplay {
       screenCenterX = screenWidth / 2;
     }
 
-    void setHeight(int h) {
-      screenHeight = h;
-    }
-
-    void setImageHeight(int h) {
-      imageHeight = h;
-    }
-
-    void setImageWidth(int w) {
-      imageWidth = w;
-    }
+    void setHeight(int h) {screenHeight = h;}
+    void setImageHeight(int h) {imageHeight = h;}
+    void setImageWidth(int w) {imageWidth = w;}
 
   protected:
     int screenWidth;

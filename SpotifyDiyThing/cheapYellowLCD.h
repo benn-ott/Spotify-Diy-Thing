@@ -30,10 +30,7 @@ const char *ALBUM_ART = "/album.jpg";
 // you will need to adapt this function to suit.
 int JPEGDraw(JPEGDRAW *pDraw) {
   // Stop further decoding as image is running off bottom of screen
-  if (pDraw->y >= tft.height()) {
-    return 0;
-  }
-
+  if (pDraw->y >= tft.height()) return 0;
   tft.pushImage(pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight, pDraw->pPixels);
   return 1;
 }
@@ -47,31 +44,22 @@ void *myOpen(const char *filename, int32_t *size) {
 }
 
 void myClose(void *handle) {
-  if (myfile) {
-    myfile.close();
-  }
+  if (myfile) myfile.close();
 }
 
 int32_t myRead(JPEGFILE *handle, uint8_t *buffer, int32_t length) {
-  if (!myfile) {
-    return 0;
-  }
-
+  if (!myfile) return 0;
   return myfile.read(buffer, length);
 }
 
 int32_t mySeek(JPEGFILE *handle, int32_t position) {
-  if (!myfile) {
-    return 0;
-  }
-  
+  if (!myfile) return 0;
   return myfile.seek(position);
 }
 
 class CheapYellowDisplay : public SpotifyDisplay {
   public:
     void displaySetup(SpotifyArduino *spotifyObj) {
-
       spotify_display = spotifyObj;
 
       touchSetup(spotifyObj);
@@ -158,7 +146,7 @@ class CheapYellowDisplay : public SpotifyDisplay {
     // Image Related
     void clearImage() {
       int imagePosition = screenCenterX - (imageWidth / 2);
-      tft.fillRect(imagePosition, 0, imageWidth + 1, imageHeight, TFT_BLACK);
+      tft.fillRect(imagePosition, 0, imageWidth + 2, imageHeight, TFT_BLACK);
     }
 
     boolean processImageInfo(CurrentlyPlaying currentlyPlaying) {

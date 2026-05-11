@@ -96,13 +96,13 @@ void setup() {
 
   spotifyDisplay->displaySetup(&spotify);
 
-
   // Initialise SPIFFS, if this fails try .begin(true)
   // NOTE: I believe this formats it though it will erase everything on
   // spiffs already! In this example that is not a problem.
   // I have found once I used the true flag once, I could use it
   // without the true flag after that.
   bool spiffsInitSuccess = SPIFFS.begin(false) || SPIFFS.begin(true);
+
   if (!spiffsInitSuccess) {
     Serial.println("SPIFFS initialisation failed!");
     while (1)
@@ -144,7 +144,6 @@ void setup() {
   }
 
   spotifyRefreshToken(refreshToken);
-
   spotifyDisplay->showDefaultScreen();
 }
 

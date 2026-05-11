@@ -89,10 +89,7 @@ void updateProgressBar() {
   if (songStartMillis != 0 && millis() < requestDueTime && millis() > progressDueTime) {
     long songProgress = millis() - songStartMillis;
 
-    if (songProgress > songDuration) {
-      songProgress = songDuration;
-    }
-
+    if (songProgress > songDuration) songProgress = songDuration;
     sp_Display->displayTrackProgress(songProgress, songDuration);
     progressDueTime = millis() + delayBetweenProgressUpdates;
   }
