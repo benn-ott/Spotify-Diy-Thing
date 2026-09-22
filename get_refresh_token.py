@@ -1,14 +1,8 @@
-import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-# --------------------------------------------------------
-# Fill in your Spotify app credentials here
-# --------------------------------------------------------
-CLIENT_ID     = "YOUR CODE HERE"
-CLIENT_SECRET = "YOUR CODE HERE"
-REDIRECT_URI  = "http://127.0.0.1:8888/callback"
-# --------------------------------------------------------
-
+CLIENT_ID = "YOUR_CLIENT_ID"
+CLIENT_SECRET = "YOUR_CLIENT_SECRET"
+REDIRECT_URI = "http://127.0.0.1:8888/callback"  # must match dashboard EXACTLY
 SCOPE = "user-read-playback-state user-modify-playback-state"
 
 auth_manager = SpotifyOAuth(
@@ -16,23 +10,19 @@ auth_manager = SpotifyOAuth(
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
     scope=SCOPE,
-    open_browser=True,
+    open_browser=False,
 )
 
-print("\nOpening Spotify login in your browser...")
-print("After you approve access, you'll be redirected to a page that may show an error.")
-print("That's fine — just copy the ENTIRE URL from your browser's address bar and paste it here.\n")
+auth_url = auth_manager.get_authorize_url()
+print(f"1. Open this URL, log in, and click Agree:\n{auth_url}\n")
+response_url = input(
+    "2. Paste the FULL URL of the page you land on afterwards (even if it "
+    "fails to load) here: "
+).strip()
 
-# This will open the browser and wait for you to paste the redirect URL
-token_info = auth_manager.get_access_token(as_dict=True)
+code = auth_manager.parse_response_code(response_url)
+auth_manager.get_access_token(code, as_dict=False)  # caches the token(s)
 
-refresh_token = token_info.get("refresh_token")
-
-if refresh_token:
-    print("\n✅ Success! Here is your refresh token:")
-    print("-" * 60)
-    print(refresh_token)
-    print("-" * 60)
-    print("\nPaste this into the 'Refresh Token' field in the SpotifyDiy config page.")
-else:
-    print("\n❌ Failed to get refresh token. Check your CLIENT_ID and CLIENT_SECRET and try again.")
+token_info = auth_manager.get_cached_token()
+print("\nAccess token:", token_info["access_token"])
+print("Refresh token:", token_info["refresh_token"])
