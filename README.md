@@ -12,8 +12,8 @@ Due to [changes to Spotify's security requirements](https://developer.spotify.co
 - First, install **Spotipy**: `pip install spotipy`.
 - Download `get_refresh_token.py` from this repo and edit the `CLIENT_ID` and `CLIENT_SECRET` strings to match your application.
 - In your Spotify developer dashboard, set the redirect URI to `http://127.0.0.1:8888/callback`.
-- Run the Python script, which will launch the Spotify authorization flow. The script should grab the URL and display the token, but you may need to copy and paste the URL yourself.
-- Save your refresh token, and enter it when you enter the client ID and client secret in while setting up your Wi-Fi. This should enable you to skip the authenication step from the original project.
+- Run the Python script. Follow the steps to get your access and refresh tokens.
+- Save your **access** token, and enter it in the **refresh token** field when you enter the client ID and client secret in while setting up your Wi-Fi. This should enable you to skip the authenication step from the original project.
 
 ### Functionality 
 
