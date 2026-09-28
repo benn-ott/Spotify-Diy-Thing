@@ -2,6 +2,11 @@ SpotifyDisplay *sp_Display;
 
 SpotifyArduino spotify(client, NULL, NULL);
 
+// PlatformIO's board_ssl_cert_source build step generates and embeds this
+// certificate bundle (see platformio.ini + scripts/generate_cert_bundle.py)
+extern const uint8_t rootca_crt_bundle_start[] asm("_binary_src_certs_x509_crt_bundle_bin_start");
+extern const uint8_t rootca_crt_bundle_end[] asm("_binary_src_certs_x509_crt_bundle_bin_end");
+
 bool albumArtChanged = false;
 bool isCurrentlyPlaying = false;
 
@@ -22,7 +27,13 @@ unsigned long progressDueTime;                   // time when request due
 
 void spotifySetup(SpotifyDisplay *theDisplay, const char *clientId, const char *clientSecret) {
   sp_Display = theDisplay;
-  client.setCACert(spotify_server_cert);
+
+#if ESP_ARDUINO_VERSION_MAJOR == 3
+  client.setCACertBundle(rootca_crt_bundle_start, rootca_crt_bundle_end - rootca_crt_bundle_start);
+#else
+  client.setCACertBundle(rootca_crt_bundle_start);
+#endif
+
   spotify.lateInit(clientId, clientSecret);
 
   lastTrackUri[0] = '\0';

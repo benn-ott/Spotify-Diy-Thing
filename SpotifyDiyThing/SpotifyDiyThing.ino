@@ -42,10 +42,6 @@
 
 #include <SpotifyArduino.h>
 
-// including a "spotify_server_cert" variable
-// header is included as part of the SpotifyArduino libary
-#include <SpotifyArduinoCert.h>
-
 #include <ArduinoJson.h>
 
 WiFiClientSecure client;

@@ -5,3 +5,5 @@
 .pio
 .vscode
 .cache
+src/
+ssl_certs/
