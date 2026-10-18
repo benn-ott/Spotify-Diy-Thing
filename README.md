@@ -2,7 +2,7 @@
 
 This is a fork of https://github.com/witnessmenow/Spotify-Diy-Thing. Consult that project for setup instructions. 
 
-The webflasher for this fork is availble [here](https://benn-ott.github.io/Spotify-Diy-Thing/). (Chrome & Edge only)
+The webflasher for this fork is availble [here](https://benn-ott.github.io/Spotify-Diy-Thing/) (Chrome & Edge only).
 
 ## Changes
 
@@ -18,14 +18,19 @@ Due to [changes to Spotify's security requirements](https://developer.spotify.co
 ### Functionality 
 
 - Adds basic pause/play toggle, triggered by tapping the album art.
+- Text is now truncated if it is too long for the display. Tapping the text area triggers scrolling, enabling viewing the full title(s).
 
 ### Other
 
 - Removes all NFC and matrix display code.
 - Removes cyd2usb option (newer versions of this board no longer have the issues that made this option necessary).
-- Minor bug fixes to progress tracker, album art updates, and other non-essential features.
+- Minor bug fixes to: 
+    - Progress tracker
+    - Album art updates
+    - Other non-essential features
 
 ### To come
 
-- Updates for title/artist/album rendering to set maximum length and deal with missing characters.
-- Additional screens for device selection and music selection.
+- Additional screens for device and music selection?
+- More?
+
