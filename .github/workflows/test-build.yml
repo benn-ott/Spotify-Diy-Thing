@@ -1,14 +1,16 @@
-name: Test compiling arduino code
+name: Test compiling firmware
 
 on:
-  # Runs on all branches but main, when a arduino file is changed
+  # Runs on all branches but main, when firmware or build config files change
   push:
-    branches-ignore : ["main"]
+    branches-ignore: ["main"]
     paths:
       - '**.ino'
       - '**.h'
+      - '**.cpp'
       - '**.yml'
-
+      - 'platformio.ini'
+      - 'scripts/**'
 
 jobs:
   # Build job
@@ -16,41 +18,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Install the Arduino CLI
-      - name: Install Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-      # Install TFT_eSPI
-      - name: Install TFT_eSPI library to prepare for modifications
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-v2-${{ hashFiles('platformio.ini') }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      # cryptography and requests are needed by scripts/generate_cert_bundle.py
+      - name: Install PlatformIO
         run: |
-          arduino-cli lib install TFT_eSPI
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio cryptography requests
 
-      # Copy user_setup from repo to TFT_eSPI folder
-      - name: Copy User_Setup.h for TFT_eSPI
-        run: |
-          \cp -fR DisplayConfig/User_Setup.h ~/Arduino/libraries/TFT_eSPI/
-
-      # Build CYD Arduino Code
-      - uses: arduino/compile-sketches@v1
-        name: Compile CYD code
-        continue-on-error: true
-        with: 
-          fqbn: "esp32:esp32:esp32"
-          platforms: |
-            - name: esp32:esp32
-              source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          # No need to specify ESP-libraries as these are installed with the platform (on the line above).
-          libraries: | 
-            - name: SpotifyArduino
-              source-url: https://github.com/witnessmenow/spotify-api-arduino.git
-            - name: WiFiManager
-            - name: ESP_DoubleResetDetector 
-            - name: ArduinoJson 
-            - name: JPEGDEC
-            - name: XPT2046_Touchscreen
-          sketch-paths: |
-            - SpotifyDiyThing
-          enable-warnings-report: true
-          verbose: false
+      # Display settings come from build_flags in platformio.ini,
+      # so there's no need to copy User_Setup.h anymore
+      - name: Build CYD
+        run: platformio run -e cyd
