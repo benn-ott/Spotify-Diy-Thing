@@ -22,7 +22,7 @@
 
 TFT_eSPI tft = TFT_eSPI();
 JPEGDEC jpeg;
-TFT_eSprite titleSprite = TFT_eSprite(&tft); // used only while the title is scrolling
+TFT_eSprite textSprite = TFT_eSprite(&tft); // used only while text is scrolling
 
 const char *ALBUM_ART = "/album.jpg";
 
@@ -109,32 +109,30 @@ class CheapYellowDisplay : public SpotifyDisplay {
     }
 
     void printCurrentlyPlayingToScreen(CurrentlyPlaying currentlyPlaying) {
-      stopTitleScroll(false); // new song, drop any scrolling in progress
+      stopTextScroll(); // new song, drop any scrolling in progress
 
       // Clear the text
-      int textStartY = titleY;
-      int maxTextWidth = titleViewWidth();
+      int maxTextWidth = textViewWidth();
       tft.fillRect(0, textStartY, screenWidth, screenHeight - textStartY, TFT_BLACK);
 
-      // Keep the full title around in case the user taps it to scroll
-      fullTitle = currentlyPlaying.trackName;
-      titleTextWidth = tft.textWidth(fullTitle, 2);
-      titleOverflows = titleTextWidth > maxTextWidth;
-      fittedTitle = fitText(fullTitle, maxTextWidth, 2);
+      // Keep the full text around in case the user taps to scroll
+      setLine(0, currentlyPlaying.trackName, maxTextWidth);
+      setLine(1, currentlyPlaying.artists[0].artistName, maxTextWidth);
+      setLine(2, currentlyPlaying.albumName, maxTextWidth);
 
-      tft.drawCentreString(fittedTitle, screenCenterX, textStartY, 2);
-      tft.drawCentreString(fitText(currentlyPlaying.artists[0].artistName, maxTextWidth, 2), screenCenterX, textStartY + 18, 2);
-      tft.drawCentreString(fitText(currentlyPlaying.albumName, maxTextWidth, 2), screenCenterX, textStartY + 36, 2);
+      for (int i = 0; i < NUM_LINES; i++) {
+        drawFittedLine(i);
+      }
     }
 
     void checkForInput() {
-      updateTitleScroll(); // advance the title scroll animation (no-op if not scrolling)
+      updateTextScroll(); // advance the scroll animation (no-op if not scrolling)
 
       if (millis() > touchScreenCoolDownTime && handleTouched()) {
         if (textAreaTouched) {
-          // Tap below the progress bar toggles title scrolling; never a button press
-          handleTitleTap();
-          touchScreenCoolDownTime = millis() + titleTapCoolDownInterval;
+          // Tap below the progress bar scrolls any long text once; never a button press
+          handleTextTap();
+          touchScreenCoolDownTime = millis() + textTapCoolDownInterval;
           return;
         }
 
@@ -237,87 +235,163 @@ class CheapYellowDisplay : public SpotifyDisplay {
     unsigned long touchScreenCoolDownInterval = 200; // How long after a touch press do we accept another (0.2 seconds). There is also an APi request inbetween
     unsigned long touchScreenCoolDownTime;           // time when cool down has expired
 
-    // ---- Title scrolling ----
-    int titleY = 150 + 30;                               // top of the title line
-    String fullTitle;                                    // untruncated title
-    String fittedTitle;                                  // truncated title shown when not scrolling
-    int titleTextWidth = 0;                              // pixel width of fullTitle
-    bool titleOverflows = false;                         // true if fullTitle doesn't fit on screen
-    bool scrolling = false;
-    int scrollOffset = 0;                                // px the text is shifted left
-    int scrollDir = 1;                                   // 1 = scrolling to the end, -1 = back
-    unsigned long nextScrollTime = 0;
-    const int scrollStep = 2;                            // px per frame
-    const unsigned long scrollFrameInterval = 30;        // ms between frames
-    const unsigned long scrollEndPause = 1000;           // ms to pause at each end
-    unsigned long titleTapCoolDownInterval = 500;        // ms to ignore taps after a title tap
+    // ---- Text scrolling (title, artist, album) ----
+    // A tap below the progress bar scrolls every line that is too long: out to the end,
+    // pause, back to the start, then the truncated version is restored.
+    enum ScrollPhase { SCROLL_IDLE, SCROLL_START_PAUSE, SCROLL_OUT, SCROLL_END_PAUSE, SCROLL_BACK };
 
-    int titleViewWidth() {
+    struct TextLine {
+      String full;                       // untruncated text
+      String fitted;                     // truncated text shown when not scrolling
+      int width = 0;                     // pixel width of full
+      bool overflows = false;            // true if full doesn't fit on screen
+      int y = 0;                         // top of the line on screen
+      int offset = 0;                    // px the text is shifted left
+      ScrollPhase phase = SCROLL_IDLE;
+      unsigned long nextTime = 0;        // when this line next needs attention
+    };
+
+    static const int NUM_LINES = 3;      // title, artist, album
+    TextLine lines[NUM_LINES];
+    int textStartY = 150 + 30;           // top of the first line
+    int lineSpacing = 18;
+    bool scrolling = false;
+
+    const int scrollStep = 2;                        // px per frame
+    const unsigned long scrollFrameInterval = 30;    // ms between frames
+    const unsigned long scrollEndPause = 1000;       // ms to pause at each end
+    unsigned long textTapCoolDownInterval = 500;     // ms to ignore taps after a text tap
+
+    int textViewWidth() {
       return screenWidth - 20; // 10px margin each side
     }
 
-    void handleTitleTap() {
-      if (!titleOverflows) return; // title fits, nothing to scroll
-
-      if (scrolling) {
-        stopTitleScroll(true);
-      } else {
-        startTitleScroll();
-      }
+    void setLine(int i, const String &text, int maxWidth) {
+      lines[i].full = text;
+      lines[i].width = tft.textWidth(text, 2);
+      lines[i].overflows = lines[i].width > maxWidth;
+      lines[i].fitted = fitText(text, maxWidth, 2);
+      lines[i].y = textStartY + i * lineSpacing;
+      lines[i].offset = 0;
+      lines[i].phase = SCROLL_IDLE;
     }
 
-    void startTitleScroll() {
-      // Sprite only exists while scrolling, so the RAM is free for HTTPS/JPEG the rest of the time
-      if (titleSprite.createSprite(titleViewWidth(), tft.fontHeight(2)) == nullptr) {
-        Serial.println("Failed to allocate title sprite");
+    void drawFittedLine(int i) {
+      tft.drawCentreString(lines[i].fitted, screenCenterX, lines[i].y, 2);
+    }
+
+    void restoreLine(int i) {
+      tft.fillRect(0, lines[i].y, screenWidth, lineSpacing, TFT_BLACK);
+      drawFittedLine(i);
+    }
+
+    void drawLineFrame(int i) {
+      textSprite.fillSprite(TFT_BLACK);
+      textSprite.drawString(lines[i].full, -lines[i].offset, 0, 2);
+      textSprite.pushSprite(10, lines[i].y);
+    }
+
+    void handleTextTap() {
+      if (scrolling) return; // one pass at a time
+
+      bool anyOverflow = false;
+      for (int i = 0; i < NUM_LINES; i++) {
+        if (lines[i].overflows) anyOverflow = true;
+      }
+      if (!anyOverflow) return; // everything fits, nothing to scroll
+
+      startTextScroll();
+    }
+
+    void startTextScroll() {
+      // One sprite is shared by all lines and only exists while scrolling,
+      // so the RAM is free for HTTPS/JPEG the rest of the time
+      if (textSprite.createSprite(textViewWidth(), tft.fontHeight(2)) == nullptr) {
+        Serial.println("Failed to allocate text sprite");
         return;
       }
-      titleSprite.setTextColor(TFT_WHITE, TFT_BLACK);
+      textSprite.setTextColor(TFT_WHITE, TFT_BLACK);
 
       scrolling = true;
-      scrollOffset = 0;
-      scrollDir = 1;
-      drawTitleFrame();
-      nextScrollTime = millis() + scrollEndPause; // linger on the start of the title
+      for (int i = 0; i < NUM_LINES; i++) {
+        if (!lines[i].overflows) continue;
+
+        lines[i].offset = 0;
+        lines[i].phase = SCROLL_START_PAUSE;
+        lines[i].nextTime = millis() + scrollEndPause; // linger on the start of the text
+        drawLineFrame(i);
+      }
     }
 
-    void stopTitleScroll(bool redraw) {
+    // Abandon scrolling without redrawing (caller redraws the text area itself)
+    void stopTextScroll() {
       if (!scrolling) return;
 
       scrolling = false;
-      titleSprite.deleteSprite();
-
-      if (redraw) {
-        tft.fillRect(0, titleY, screenWidth, 18, TFT_BLACK);
-        tft.drawCentreString(fittedTitle, screenCenterX, titleY, 2);
+      textSprite.deleteSprite();
+      for (int i = 0; i < NUM_LINES; i++) {
+        lines[i].phase = SCROLL_IDLE;
       }
     }
 
-    void drawTitleFrame() {
-      titleSprite.fillSprite(TFT_BLACK);
-      titleSprite.drawString(fullTitle, -scrollOffset, 0, 2);
-      titleSprite.pushSprite(10, titleY);
-    }
+    void updateTextScroll() {
+      if (!scrolling) return;
 
-    void updateTitleScroll() {
-      if (!scrolling || millis() < nextScrollTime) return;
+      bool anyActive = false;
+      unsigned long now = millis();
 
-      scrollOffset += scrollDir * scrollStep;
-      int maxOffset = titleTextWidth - titleViewWidth();
+      for (int i = 0; i < NUM_LINES; i++) {
+        TextLine &l = lines[i];
+        if (l.phase == SCROLL_IDLE) continue;
 
-      if (scrollOffset >= maxOffset) {
-        scrollOffset = maxOffset;
-        scrollDir = -1;
-        nextScrollTime = millis() + scrollEndPause;
-      } else if (scrollOffset <= 0) {
-        scrollOffset = 0;
-        scrollDir = 1;
-        nextScrollTime = millis() + scrollEndPause;
-      } else {
-        nextScrollTime = millis() + scrollFrameInterval;
+        anyActive = true;
+        if (now < l.nextTime) continue;
+
+        int maxOffset = l.width - textViewWidth();
+
+        switch (l.phase) {
+          case SCROLL_START_PAUSE:
+            l.phase = SCROLL_OUT;
+            break;
+
+          case SCROLL_OUT:
+            l.offset += scrollStep;
+            if (l.offset >= maxOffset) {
+              l.offset = maxOffset;
+              l.phase = SCROLL_END_PAUSE;
+              l.nextTime = now + scrollEndPause;
+            } else {
+              l.nextTime = now + scrollFrameInterval;
+            }
+            drawLineFrame(i);
+            break;
+
+          case SCROLL_END_PAUSE:
+            l.phase = SCROLL_BACK;
+            break;
+
+          case SCROLL_BACK:
+            l.offset -= scrollStep;
+            if (l.offset <= 0) {
+              l.offset = 0;
+              l.phase = SCROLL_IDLE;
+              restoreLine(i);
+            } else {
+              l.nextTime = now + scrollFrameInterval;
+              drawLineFrame(i);
+            }
+            break;
+
+          default:
+            break;
+        }
       }
 
-      drawTitleFrame();
+      if (!anyActive) {
+        // Every line has finished its pass
+        scrolling = false;
+        textSprite.deleteSprite();
+      }
     }
 
     // Returns text trimmed with "..." so it fits within maxWidth pixels

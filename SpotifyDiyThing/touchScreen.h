@@ -19,7 +19,7 @@ bool textAreaTouched = false;
 // Screen is split into vertical zones (320x240, rotation 1):
 //   y <  CONTROLS_AREA_MAX_Y  : album art + control buttons (prev / play-pause / next)
 //   CONTROLS_AREA_MAX_Y..TEXT_AREA_MIN_Y : progress bar (taps ignored for now, room for seek later)
-//   y >= TEXT_AREA_MIN_Y      : track info text (tap scrolls a long title)
+//   y >= TEXT_AREA_MIN_Y      : track info text (tap scrolls any long lines once)
 #define CONTROLS_AREA_MAX_Y 155
 #define TEXT_AREA_MIN_Y 175
 
