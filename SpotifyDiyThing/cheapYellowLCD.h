@@ -110,10 +110,11 @@ class CheapYellowDisplay : public SpotifyDisplay {
     void printCurrentlyPlayingToScreen(CurrentlyPlaying currentlyPlaying) {
       // Clear the text
       int textStartY = 150 + 30;
+      int maxTextWidth = screenWidth - 20; // 10px margin each side
       tft.fillRect(0, textStartY, screenWidth, screenHeight - textStartY, TFT_BLACK);
-      tft.drawCentreString(currentlyPlaying.trackName, screenCenterX, textStartY, 2);
-      tft.drawCentreString(currentlyPlaying.artists[0].artistName, screenCenterX, textStartY + 18, 2);
-      tft.drawCentreString(currentlyPlaying.albumName, screenCenterX, textStartY + 36, 2);
+      tft.drawCentreString(fitText(currentlyPlaying.trackName, maxTextWidth, 2), screenCenterX, textStartY, 2);
+      tft.drawCentreString(fitText(currentlyPlaying.artists[0].artistName, maxTextWidth, 2), screenCenterX, textStartY + 18, 2);
+      tft.drawCentreString(fitText(currentlyPlaying.albumName, maxTextWidth, 2), screenCenterX, textStartY + 36, 2);
     }
 
     void checkForInput() {
@@ -216,6 +217,21 @@ class CheapYellowDisplay : public SpotifyDisplay {
   private:
     unsigned long touchScreenCoolDownInterval = 200; // How long after a touch press do we accept another (0.2 seconds). There is also an APi request inbetween
     unsigned long touchScreenCoolDownTime;           // time when cool down has expired
+
+    // Returns text trimmed with "..." so it fits within maxWidth pixels
+    String fitText(const String &text, int maxWidth, int font) {
+      if (tft.textWidth(text, font) <= maxWidth) return text;
+
+      String t = text;
+      while (t.length() > 0 && tft.textWidth(t + "...", font) > maxWidth) {
+        t.remove(t.length() - 1);
+        // Don't leave half of a multi-byte UTF-8 character at the end
+        while (t.length() > 0 && ((uint8_t)t[t.length() - 1] & 0xC0) == 0x80) t.remove(t.length() - 1);
+        if (t.length() > 0 && ((uint8_t)t[t.length() - 1] & 0xC0) == 0xC0) t.remove(t.length() - 1);
+      }
+      t.trim(); // avoid "word ..."
+      return t + "...";
+    }
 
     int displayImageUsingFile(char *albumArtUrl) {
 
