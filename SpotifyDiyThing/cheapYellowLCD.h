@@ -315,8 +315,8 @@ class CheapYellowDisplay : public SpotifyDisplay {
 
         if(isPlayingStatus) {
           // Draw pause symbol
-          tft.fillRect(screenCenterX - 7, buttonCenterY - 10, 3, 20, TFT_WHITE);
-          tft.fillRect(screenCenterX + 2, buttonCenterY - 10, 3, 20, TFT_WHITE);
+          tft.fillRect(screenCenterX - 4, buttonCenterY - 10, 3, 20, TFT_WHITE);
+          tft.fillRect(screenCenterX + 4, buttonCenterY - 10, 3, 20, TFT_WHITE);
         } else {
           // Draw play symbol
           tft.fillTriangle(screenCenterX - 4, buttonCenterY - 8, screenCenterX - 4, buttonCenterY + 8, screenCenterX + 8, buttonCenterY, TFT_WHITE);
