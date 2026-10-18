@@ -14,6 +14,14 @@
 bool previousTrackStatus = false;
 bool nextTrackStatus = false;
 bool pausePlayToggle = false;
+bool textAreaTouched = false;
+
+// Screen is split into vertical zones (320x240, rotation 1):
+//   y <  CONTROLS_AREA_MAX_Y  : album art + control buttons (prev / play-pause / next)
+//   CONTROLS_AREA_MAX_Y..TEXT_AREA_MIN_Y : progress bar (taps ignored for now, room for seek later)
+//   y >= TEXT_AREA_MIN_Y      : track info text (tap scrolls a long title)
+#define CONTROLS_AREA_MAX_Y 155
+#define TEXT_AREA_MIN_Y 175
 
 //SPIClass mySpi = SPIClass(HSPI);
 //
@@ -34,6 +42,7 @@ bool handleTouched() {
   previousTrackStatus = false;
   nextTrackStatus = false;
   pausePlayToggle = false;
+  textAreaTouched = false;
 
   if (ts.touched()) {
     CYD28_TS_Point p = ts.getPointScaled();
@@ -46,6 +55,18 @@ bool handleTouched() {
     delay(30);
     Serial.println();
 
+    // Below the progress bar: text area (not a button press)
+    if (p.y >= TEXT_AREA_MIN_Y) {
+      textAreaTouched = true;
+      return true;
+    }
+
+    // On the progress bar: ignore for now
+    if (p.y >= CONTROLS_AREA_MAX_Y) {
+      return false;
+    }
+
+    // Above the progress bar: controls
     if (p.x < 120) {
       previousTrackStatus = true;
       return true;

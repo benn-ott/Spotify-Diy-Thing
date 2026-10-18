@@ -22,6 +22,7 @@
 
 TFT_eSPI tft = TFT_eSPI();
 JPEGDEC jpeg;
+TFT_eSprite titleSprite = TFT_eSprite(&tft); // used only while the title is scrolling
 
 const char *ALBUM_ART = "/album.jpg";
 
@@ -108,17 +109,35 @@ class CheapYellowDisplay : public SpotifyDisplay {
     }
 
     void printCurrentlyPlayingToScreen(CurrentlyPlaying currentlyPlaying) {
+      stopTitleScroll(false); // new song, drop any scrolling in progress
+
       // Clear the text
-      int textStartY = 150 + 30;
-      int maxTextWidth = screenWidth - 20; // 10px margin each side
+      int textStartY = titleY;
+      int maxTextWidth = titleViewWidth();
       tft.fillRect(0, textStartY, screenWidth, screenHeight - textStartY, TFT_BLACK);
-      tft.drawCentreString(fitText(currentlyPlaying.trackName, maxTextWidth, 2), screenCenterX, textStartY, 2);
+
+      // Keep the full title around in case the user taps it to scroll
+      fullTitle = currentlyPlaying.trackName;
+      titleTextWidth = tft.textWidth(fullTitle, 2);
+      titleOverflows = titleTextWidth > maxTextWidth;
+      fittedTitle = fitText(fullTitle, maxTextWidth, 2);
+
+      tft.drawCentreString(fittedTitle, screenCenterX, textStartY, 2);
       tft.drawCentreString(fitText(currentlyPlaying.artists[0].artistName, maxTextWidth, 2), screenCenterX, textStartY + 18, 2);
       tft.drawCentreString(fitText(currentlyPlaying.albumName, maxTextWidth, 2), screenCenterX, textStartY + 36, 2);
     }
 
     void checkForInput() {
+      updateTitleScroll(); // advance the title scroll animation (no-op if not scrolling)
+
       if (millis() > touchScreenCoolDownTime && handleTouched()) {
+        if (textAreaTouched) {
+          // Tap below the progress bar toggles title scrolling; never a button press
+          handleTitleTap();
+          touchScreenCoolDownTime = millis() + titleTapCoolDownInterval;
+          return;
+        }
+
         drawTouchButtons(previousTrackStatus, nextTrackStatus, pausePlayToggle, isCurrentlyPlaying);
 
         if (previousTrackStatus) {
@@ -217,6 +236,89 @@ class CheapYellowDisplay : public SpotifyDisplay {
   private:
     unsigned long touchScreenCoolDownInterval = 200; // How long after a touch press do we accept another (0.2 seconds). There is also an APi request inbetween
     unsigned long touchScreenCoolDownTime;           // time when cool down has expired
+
+    // ---- Title scrolling ----
+    int titleY = 150 + 30;                               // top of the title line
+    String fullTitle;                                    // untruncated title
+    String fittedTitle;                                  // truncated title shown when not scrolling
+    int titleTextWidth = 0;                              // pixel width of fullTitle
+    bool titleOverflows = false;                         // true if fullTitle doesn't fit on screen
+    bool scrolling = false;
+    int scrollOffset = 0;                                // px the text is shifted left
+    int scrollDir = 1;                                   // 1 = scrolling to the end, -1 = back
+    unsigned long nextScrollTime = 0;
+    const int scrollStep = 2;                            // px per frame
+    const unsigned long scrollFrameInterval = 30;        // ms between frames
+    const unsigned long scrollEndPause = 1000;           // ms to pause at each end
+    unsigned long titleTapCoolDownInterval = 500;        // ms to ignore taps after a title tap
+
+    int titleViewWidth() {
+      return screenWidth - 20; // 10px margin each side
+    }
+
+    void handleTitleTap() {
+      if (!titleOverflows) return; // title fits, nothing to scroll
+
+      if (scrolling) {
+        stopTitleScroll(true);
+      } else {
+        startTitleScroll();
+      }
+    }
+
+    void startTitleScroll() {
+      // Sprite only exists while scrolling, so the RAM is free for HTTPS/JPEG the rest of the time
+      if (titleSprite.createSprite(titleViewWidth(), tft.fontHeight(2)) == nullptr) {
+        Serial.println("Failed to allocate title sprite");
+        return;
+      }
+      titleSprite.setTextColor(TFT_WHITE, TFT_BLACK);
+
+      scrolling = true;
+      scrollOffset = 0;
+      scrollDir = 1;
+      drawTitleFrame();
+      nextScrollTime = millis() + scrollEndPause; // linger on the start of the title
+    }
+
+    void stopTitleScroll(bool redraw) {
+      if (!scrolling) return;
+
+      scrolling = false;
+      titleSprite.deleteSprite();
+
+      if (redraw) {
+        tft.fillRect(0, titleY, screenWidth, 18, TFT_BLACK);
+        tft.drawCentreString(fittedTitle, screenCenterX, titleY, 2);
+      }
+    }
+
+    void drawTitleFrame() {
+      titleSprite.fillSprite(TFT_BLACK);
+      titleSprite.drawString(fullTitle, -scrollOffset, 0, 2);
+      titleSprite.pushSprite(10, titleY);
+    }
+
+    void updateTitleScroll() {
+      if (!scrolling || millis() < nextScrollTime) return;
+
+      scrollOffset += scrollDir * scrollStep;
+      int maxOffset = titleTextWidth - titleViewWidth();
+
+      if (scrollOffset >= maxOffset) {
+        scrollOffset = maxOffset;
+        scrollDir = -1;
+        nextScrollTime = millis() + scrollEndPause;
+      } else if (scrollOffset <= 0) {
+        scrollOffset = 0;
+        scrollDir = 1;
+        nextScrollTime = millis() + scrollEndPause;
+      } else {
+        nextScrollTime = millis() + scrollFrameInterval;
+      }
+
+      drawTitleFrame();
+    }
 
     // Returns text trimmed with "..." so it fits within maxWidth pixels
     String fitText(const String &text, int maxWidth, int font) {
